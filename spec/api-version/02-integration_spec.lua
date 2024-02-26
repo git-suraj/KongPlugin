@@ -1,7 +1,19 @@
 local helpers = require "spec.helpers"
 
 
-local PLUGIN_NAME = "myplugin"
+local PLUGIN_NAME = "api-version"
+
+
+local function validate(headers)
+  -- Example validation logic
+  if headers.request_header and not headers.response_header then
+      -- Assuming validation passes if there's a request_header but no response_header
+      return true, nil
+  else
+      -- Fails otherwise
+      return false, "Invalid headers"
+  end
+end
 
 
 for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
@@ -79,10 +91,19 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         -- validate that the request succeeded, response status 200
         assert.response(r).has.status(200)
         -- now check the response to have the header
-        local header_value = assert.response(r).has.header("bye-world")
+        local header_value = assert.response(r).has.header("Version")
         -- validate the value of that header
-        assert.equal("this is on the response", header_value)
+        assert.equal("0.1", header_value)
       end)
+
+      it("provides a default response_header", function()
+        local ok, err = validate({
+         request_header = "My-Request-Header", 
+         response_header = nil, }) 
+       assert.is_nil(err) 
+       assert.is_truthy(ok) 
+       end)
+
     end)
 
   end)
